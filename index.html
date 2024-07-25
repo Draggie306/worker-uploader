@@ -26,11 +26,28 @@
                 <div id="progress-bar-fill">0%</div>
             </div>
         </div>
-        <div id="message"></div>
     </div>
 
     <script>
+    const validCode = "test";
+    const uploadForm = document.getElementById('upload-form');
 
+    uploadForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const files = document.getElementById('images').files;
+        if (files.length > 0 && files.length <= 20) {
+            progressContainer.style.display = 'block';
+            // const formData = new FormData(); /*
+
+            // POST request to the server without xhr
+
+            let server_url = "https://red-glade-16e4.draggie.workers.dev/upload"
+
+
+        } else {
+            xonsole.log("Please select between 1 and 20 images.");
+        }
+    });
 </script>
 
 </body>
