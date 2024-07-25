@@ -11,6 +11,47 @@
             padding: 20px;
             background-color: #f8f8f8;
         }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        input[type="text"], input[type="file"] {
+            width: calc(100% - 40px);
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #file-status {
+            margin-top: 10px;
+        }
+        #progress-bar {
+            width: 100%;
+            background: #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        #progress-bar-fill {
+            height: 20px;
+            background: #4CAF50;
+            width: 0%;
+            text-align: center;
+            color: white;
+            line-height: 20px;
+            border-radius: 5px;
+        }
+        input[type="submit"], button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -25,30 +66,79 @@
             <div id="progress-bar">
                 <div id="progress-bar-fill">0%</div>
             </div>
+            <div id="file-status"></div>
         </div>
+        <div id="message"></div>
     </div>
 
     <script>
     const validCode = "test";
+    const codeForm = document.getElementById('code-form');
     const uploadForm = document.getElementById('upload-form');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBarFill = document.getElementById('progress-bar-fill');
+    const fileStatus = document.getElementById('file-status');
+    const messageDiv = document.getElementById('message');
+
+    // listen for the initial validation code form submission first.
+    codeForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const code = document.getElementById('code').value;
+        if (code === validCode) {
+            uploadForm.style.display = 'block';
+            codeForm.style.display = 'none';
+        } else {
+            messageDiv.textContent = 'Invalid code. Please try again.';
+            messageDiv.style.color = 'red';
+        }
+    });
 
     uploadForm.addEventListener('submit', function(event) {
         event.preventDefault();
         const files = document.getElementById('images').files;
         if (files.length > 0 && files.length <= 20) {
             progressContainer.style.display = 'block';
-            // const formData = new FormData(); /*
-
             // POST request to the server without xhr
-
             let server_url = "https://red-glade-16e4.draggie.workers.dev/upload"
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('images', files[i]);
+            }
+            let uploaded = 0;
+            const totalFiles = files.length;
 
-
+            function uploadFile(file, index) {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'https://red-glade-16e4.draggie.workers.dev/upload', true);
+                xhr.upload.onprogress = function(event) {
+                    if (event.lengthComputable) {
+                        const percentage = Math.round((event.loaded / event.total) * 100);
+                        progressBarFill.style.width = `${percentage}%`;
+                        progressBarFill.textContent = `${percentage}%`;
+                        fileStatus.textContent = `Uploading ${file.name} (${index + 1} of ${totalFiles}) - ${event.loaded} bytes of ${event.total} bytes`;
+                    }
+                };
+            
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        uploaded++;
+                        if (uploaded === totalFiles) {
+                            // all files have been uploaded
+                            progressContainer.style.display = 'none';
+                            messageDiv.textContent = 'All files have been uploaded successfully!';
+                            messageDiv.style.color = 'green';
+                        }
+                    }
+                };  
+                xhr.send(formData);
+            }
         } else {
-            xonsole.log("Please select between 1 and 20 images.");
+            console.log('Please select between 1 and 20 images.');
+            messageDiv.textContent = 'Please select between 1 and 20 images.';
+            messageDiv.style.color = 'red';
         }
     });
-</script>
+    </script>
 
 </body>
 </html>
