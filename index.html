@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Your Photos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f8f8f8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hi! If you see this then that means I would like you to send some photos. Instagram and other messages kill the quality; this preserves them.</h1>
+        
+        <form id="upload-form" enctype="multipart/form-data">
+            <input type="file" id="images" name="images" multiple accept="image/*">
+            <input type="submit" value="Upload">
+        </form>
+        <div id="progress-container">
+            <div id="progress-bar">
+                <div id="progress-bar-fill">0%</div>
+            </div>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <script>
+
+</script>
+
+</body>
+</html>
