@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A simple tool to upload photos, in full quality.">"
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Upload Your Photos</title>
     <style>
+        html {
+            box-sizing: border-box;
+        }
         body {
             font-family: Arial, sans-serif;
             text-align: center;
@@ -26,8 +30,20 @@
             border: 1px solid #ccc;
             border-radius: 5px;
         }
-        #file-status {
-            margin-top: 10px;
+        input[type="submit"], button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        #upload-form {
+            display: none;
+        }
+        #progress-container {
+            display: none;
+            margin: 20px 0;
         }
         #progress-bar {
             width: 100%;
@@ -44,20 +60,25 @@
             line-height: 20px;
             border-radius: 5px;
         }
-        input[type="submit"], button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            background-color: #4CAF50;
-            color: white;
-            cursor: pointer;
+        #file-status {
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Hi! If you see this then that means I would like you to send some photos. Instagram and other messages kill the quality; this preserves them.</h1>
-        
+        <h1>Hi! If you see this then that means I would like you to send some photos.</h1>
+        <h2>Instagram and other apps kill photo quality; uploading here will preserve them!</h1>
+            <h3>(If you're on iOS, you can select "Options" whilst in the gallery view to ensure that everything is
+                selected for the best quality!)</h3>
+
+        <!-- Simple authenication -->
+            <form id="code-form">
+                <label for="code">Enter the code you've received below:</label>
+                <input type="text" id="code" placeholder="Enter the code">
+                <input type="submit" value="Submit">
+        </form>
+
         <form id="upload-form" enctype="multipart/form-data">
             <input type="file" id="images" name="images" multiple accept="image/*">
             <input type="submit" value="Upload">
@@ -71,8 +92,10 @@
         <div id="message"></div>
     </div>
 
+    <!-- todo: script src instead? -->
+
     <script>
-    const validCode = "test";
+    const validCode = "ndhs";
     const codeForm = document.getElementById('code-form');
     const uploadForm = document.getElementById('upload-form');
     const progressContainer = document.getElementById('progress-container');
@@ -80,7 +103,6 @@
     const fileStatus = document.getElementById('file-status');
     const messageDiv = document.getElementById('message');
 
-    // listen for the initial validation code form submission first.
     codeForm.addEventListener('submit', function(event) {
         event.preventDefault();
         const code = document.getElementById('code').value;
@@ -97,13 +119,13 @@
         event.preventDefault();
         const files = document.getElementById('images').files;
         if (files.length > 0 && files.length <= 20) {
-            progressContainer.style.display = 'block';
-            // POST request to the server without xhr
-            let server_url = "https://red-glade-16e4.draggie.workers.dev/upload"
+            progressContainer.style.display = 'block'; // show the element as it was previously hidden
             const formData = new FormData();
-            for (let i = 0; i < files.length; i++) {
+
+            for (let i = 0; i < files.length; i++) { // iteration! :)
                 formData.append('images', files[i]);
             }
+
             let uploaded = 0;
             const totalFiles = files.length;
 
@@ -114,31 +136,46 @@
                     if (event.lengthComputable) {
                         const percentage = Math.round((event.loaded / event.total) * 100);
                         progressBarFill.style.width = `${percentage}%`;
-                        progressBarFill.textContent = `${percentage}%`;
-                        fileStatus.textContent = `Uploading ${file.name} (${index + 1} of ${totalFiles}) - ${event.loaded} bytes of ${event.total} bytes`;
+                        progressBarFill.textContent = `${percentage}% uploaded`;
+                        fileStatus.textContent = `Uploading ${file.name} (${index + 1} of ${totalFiles})`;
                     }
                 };
-            
+
                 xhr.onload = function() {
+                    // this is a function that will be called when the request is complete
                     if (xhr.status === 200) {
                         uploaded++;
-                        if (uploaded === totalFiles) {
-                            // all files have been uploaded
-                            progressContainer.style.display = 'none';
-                            messageDiv.textContent = 'All files have been uploaded successfully!';
+                        const overallPercentage = Math.round((uploaded / totalFiles) * 100);
+                        if (uploaded < totalFiles) {
+                            uploadFile(files[uploaded], uploaded);
+                        } else {
+                            messageDiv.textContent = 'Photos have been uploaded successfully!';
                             messageDiv.style.color = 'green';
                         }
+                    } else {
+                        const result = JSON.parse(xhr.responseText);
+                        messageDiv.textContent = `Error: ${result.message}`;
+                        messageDiv.style.color = 'red';
                     }
-                };  
-                xhr.send(formData);
+                };
+
+                xhr.onerror = function() {
+                    messageDiv.textContent = 'An error occurred during the upload. Please try again.';
+                    messageDiv.style.color = 'red';
+                };
+
+                const fileData = new FormData();
+                fileData.append('images', file);
+                xhr.send(fileData);
             }
+
+            uploadFile(files[0], 0);
         } else {
-            console.log('Please select between 1 and 20 images.');
             messageDiv.textContent = 'Please select between 1 and 20 images.';
             messageDiv.style.color = 'red';
         }
     });
-    </script>
+</script>
 
 </body>
 </html>
