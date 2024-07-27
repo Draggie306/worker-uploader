@@ -117,12 +117,20 @@
         }
     });
 
+    function generateUUID() {
+            return 'xxxxxxxx'.replace(/[xy]/g, function (c) {
+                const r = Math.random() * 16 | 0;
+                return r.toString(16);
+            });
+        }
+
     uploadForm.addEventListener('submit', function(event) {
         event.preventDefault();
         const files = document.getElementById('images').files;
         if (files.length > 0 && files.length <= 20) {
             progressContainer.style.display = 'block'; // show the element as it was previously hidden
             const formData = new FormData();
+            const folderPrefix = generateUUID();
 
             for (let i = 0; i < files.length; i++) { // iteration! :)
                 formData.append('images', files[i]);
@@ -157,8 +165,9 @@
                         messageDiv.textContent = text_content;
                         messageDiv.style.color = 'green';
 
-                        // Display confetti
-                        for (let i = 0; i < totalFiles; i++) {
+                        // Display confetti when all files are uploaded
+                        for (let i = 0; i < totalFiles; i++) { 
+                            // depending on how many files there are will determine the number of confetti explosions to show
                             confetti({
                                 particleCount: (Math.random() * 100) + 50,
                                 spread: (Math.random() * 100) + 50,
@@ -166,7 +175,7 @@
                             });
                         }
 
-                        // Scroll to the bottom of the page to show the message
+                        // clearly show the user that the upload is complete as the message is appended to the DOM
                         window.scrollTo(0, document.body.scrollHeight);
                     } else {
                         messageDiv.textContent = 'Error: An unknown error occurred.';

@@ -25,11 +25,21 @@ async function handleRequest(request) {
   }
 
   async function handleUpload(request) {
-    // To do.
-
-    return new Response("Not implemented", { status: 501 });
+    const formData = await request.formData();
+    const file = formData.get("file");
+    const reader = file.stream().getReader();
+    const bucket = new Bucket(env.BUCKET_NAME);
+    const writer = bucket.file(file.name).createWriteStream();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      writer.write(value);
+    }
+    writer.end();
+    return new Response("Uploaded!", { status: 200 });
   }
-};
 
 
 /*
