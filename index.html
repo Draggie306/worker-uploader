@@ -130,79 +130,75 @@
         if (files.length > 0 && files.length <= 20) {
             progressContainer.style.display = 'block'; // show the element as it was previously hidden
             const formData = new FormData();
-            const folderPrefix = generateUUID();
 
-            for (let i = 0; i < files.length; i++) { // iteration! :)
-                formData.append('images', files[i]);
-            }
+            for (let i = 0; i < totalFiles; i++) {
+                const file = files[i];
+                const fileSize = file.size;
+                let uploadedBytes = 0;
 
-            let uploaded = 0;
-            const totalFiles = files.length;
+                const fileStatusText = document.createElement('div');
+                fileStatusText.textContent = `Uploading ${file.name}`;
+                fileStatus.appendChild(fileStatusText);
 
-            function uploadFile(file, index) {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', 'https://red-glade-16e4.draggie.workers.dev/upload', true);
+                const fileData = new FormData();
+                fileData.append('images', file, `${file.name}`);
 
-            // handle upload progress
-            xhr.upload.onprogress = function(event) {
-                if (event.lengthComputable) {
-                    const percentage = Math.round((event.loaded / event.total) * 100);
-                    progressBarFill.style.width = `${percentage}%`;
-                    progressBarFill.textContent = `${percentage}% uploaded`;
-                    fileStatus.textContent = `Uploading ${file.name} (${index + 1} of ${totalFiles})`;
-                }
-            };
-
-            // handle request completion
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    uploaded++;
-                    const overallPercentage = Math.round((uploaded / totalFiles) * 100);
-                    if (uploaded < totalFiles) {
-                        uploadFile(files[uploaded], uploaded);
-                    } else if (uploaded === totalFiles) {
-                        var text_content = `All ${totalFiles} items uploaded successfully!`;
-                        messageDiv.textContent = text_content;
-                        messageDiv.style.color = 'green';
-
-                        // Display confetti when all files are uploaded
-                        for (let i = 0; i < totalFiles; i++) { 
-                            // depending on how many files there are will determine the number of confetti explosions to show
-                            confetti({
-                                particleCount: (Math.random() * 100) + 50,
-                                spread: (Math.random() * 100) + 50,
-                                origin: { y: 0.6 }
-                            });
-                        }
-
-                        // clearly show the user that the upload is complete as the message is appended to the DOM
-                        window.scrollTo(0, document.body.scrollHeight);
-                    } else {
-                        messageDiv.textContent = 'Error: An unknown error occurred.';
-                        messageDiv.style.color = 'red';
-                    }
-                } else {
-                    try {
-                        const result = JSON.parse(xhr.responseText);
-                        messageDiv.textContent = `Error: ${result.message}`;
-                    } catch (e) {
-                        messageDiv.textContent = 'Error: An unknown error occurred.';
-                    }
+                try {
+                    xhr = new XMLHttpRequest();
+                } catch (error) {
+                    console.log("err encountered");
+                    messageDiv.textContent = `Error: ${error.message}`;
                     messageDiv.style.color = 'red';
                 }
-            };
 
-            // handle network errors
-            xhr.onerror = function() {
-                messageDiv.textContent = 'Error: Network error occurred.';
-                messageDiv.style.color = 'red';
-            };
+                xhr.open('POST', 'https://photo-uploader-backend.draggie.workers.dev/upload', true);
 
-            // send the file
-            const formData = new FormData();
-            formData.append('file', file);
-            xhr.send(formData);
-        }
+                xhr.upload.onprogress = function (event) {
+                    if (event.lengthComputable) {
+                        fileStatusText.textContent = `Uploading ${file.name}`;
+                    }
+                };
+
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        uploaded++;
+                        const overallPercentage = Math.round((uploaded / totalFiles) * 100);
+                        progressBarFill.style.width = `${overallPercentage}%`;
+                        progressBarFill.textContent = `${overallPercentage}%`;
+
+                        if (uploaded === totalFiles) {
+                            messageDiv.textContent = 'Photos uploaded successfully!';
+                            messageDiv.style.color = 'green';
+
+                            // Display confetti when all files are uploaded depending on the number of files
+                            for (let i = 0; i < totalFiles; i++) {
+                                confetti({
+                                    particleCount: (Math.random() * 100) + 50,
+                                    spread: (Math.random() * 100) + 50,
+                                    origin: { y: 0.6 }
+                                });
+                            }
+
+                            // Scroll to the bottom of the page to show the message
+                            window.scrollTo(0, document.body.scrollHeight);
+                        }
+                    } else {
+                        const result = JSON.parse(xhr.responseText);
+                        messageDiv.textContent = `Error: ${result.message}`;
+                        messageDiv.style.color = 'red';
+                        return;
+                    }                    };
+
+                try {
+                    xhr.send(fileData);
+                } catch (error) {
+                    console.log("err encountered");
+                    messageDiv.textContent = `Error: ${error.message}`;
+                    messageDiv.style.color = 'red';
+                }
+
+
+            }
         } else {
             messageDiv.textContent = 'Please select between 1 and 20 images.';
             messageDiv.style.color = 'red';
