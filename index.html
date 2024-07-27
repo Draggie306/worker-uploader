@@ -130,46 +130,52 @@
             const totalFiles = files.length;
 
             function uploadFile(file, index) {
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', 'https://red-glade-16e4.draggie.workers.dev/upload', true);
-                xhr.upload.onprogress = function(event) {
-                    if (event.lengthComputable) {
-                        const percentage = Math.round((event.loaded / event.total) * 100);
-                        progressBarFill.style.width = `${percentage}%`;
-                        progressBarFill.textContent = `${percentage}% uploaded`;
-                        fileStatus.textContent = `Uploading ${file.name} (${index + 1} of ${totalFiles})`;
-                    }
-                };
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'https://red-glade-16e4.draggie.workers.dev/upload', true);
 
-                xhr.onload = function() {
-                    // this is a function that will be called when the request is complete
-                    if (xhr.status === 200) {
-                        uploaded++;
-                        const overallPercentage = Math.round((uploaded / totalFiles) * 100);
-                        if (uploaded < totalFiles) {
-                            uploadFile(files[uploaded], uploaded);
-                        } else {
-                            messageDiv.textContent = 'Photos have been uploaded successfully!';
-                            messageDiv.style.color = 'green';
-                        }
+            // handle upload progress
+            xhr.upload.onprogress = function(event) {
+                if (event.lengthComputable) {
+                    const percentage = Math.round((event.loaded / event.total) * 100);
+                    progressBarFill.style.width = `${percentage}%`;
+                    progressBarFill.textContent = `${percentage}% uploaded`;
+                    fileStatus.textContent = `Uploading ${file.name} (${index + 1} of ${totalFiles})`;
+                }
+            };
+
+            // handle request completion
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    uploaded++;
+                    const overallPercentage = Math.round((uploaded / totalFiles) * 100);
+                    if (uploaded < totalFiles) {
+                        uploadFile(files[uploaded], uploaded);
                     } else {
+                        messageDiv.textContent = 'Photos have been uploaded successfully!';
+                        messageDiv.style.color = 'green';
+                    }
+                } else {
+                    try {
                         const result = JSON.parse(xhr.responseText);
                         messageDiv.textContent = `Error: ${result.message}`;
-                        messageDiv.style.color = 'red';
+                    } catch (e) {
+                        messageDiv.textContent = 'Error: An unknown error occurred.';
                     }
-                };
-
-                xhr.onerror = function() {
-                    messageDiv.textContent = 'An error occurred during the upload. Please try again.';
                     messageDiv.style.color = 'red';
-                };
+                }
+            };
 
-                const fileData = new FormData();
-                fileData.append('images', file);
-                xhr.send(fileData);
-            }
+            // handle network errors
+            xhr.onerror = function() {
+                messageDiv.textContent = 'Error: Network error occurred.';
+                messageDiv.style.color = 'red';
+            };
 
-            uploadFile(files[0], 0);
+            // send the file
+            const formData = new FormData();
+            formData.append('file', file);
+            xhr.send(formData);
+        }
         } else {
             messageDiv.textContent = 'Please select between 1 and 20 images.';
             messageDiv.style.color = 'red';
