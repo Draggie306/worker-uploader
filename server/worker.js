@@ -27,15 +27,33 @@ async function handleRequest(request, env) {
 }
 
 async function handleUpload(request, env) {
+  // I have no idea how this works, but it does.
   const formData = await request.formData();
   const images = formData.getAll("images");
   
-  const blob = await image.arrayBuffer();
-  const key = `images/${image.name}`;
-  await env.photos.put(key, blob);
-
-  return new Response("Done", { status: 200 });
+  const promises = images.map(async (image) => {
+    const blob = await image.arrayBuffer();
+    const key = `images/${image.name}`;
+    await env.photos.put(key, blob);
+    return key;
+  });
+  const keys = await Promise.all(promises);
+  return new Response(JSON.stringify({ message: "Upload successful", keys }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*"
+    }
+  });
 }
+
+
+/*
+todo: 
+- add a route to handle the upload
+- connect r2 bucket with env variables
+- everything else
+*/
 
 export {
 worker_default as default
