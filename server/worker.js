@@ -8,6 +8,12 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+// red-glade-16e4/worker.js
+var worker_default = {
+  async fetch(request, env) {
+    return await handleRequest(request, env);
+  }
+};
 
 addEventListener('fetch', event => {
     event.respondWith(handleRequest(event.request))
@@ -26,10 +32,43 @@ async function handleRequest(request, env) {
   return new Response("Not found", { status: 404 });
 }
 
+function handleOptions(request) {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Max-Age": "86400"
+    }
+  });
+}
+
 async function handleUpload(request, env) {
   // I have no idea how this works, but it does.
+
+  if (!env || !env.photos) {
+    console.error("Environment variable photos is not defined or not accessible");
+    return new Response(JSON.stringify({ message: "Internal Server Error: Environment variable photos is not defined or not accessible" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+  }
+
   const formData = await request.formData();
   const images = formData.getAll("images");
+  if (!images.length) {
+    return new Response(JSON.stringify({ message: "No images uploaded" }), {
+      status: 400,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+  }
   
   const promises = images.map(async (image) => {
     const blob = await image.arrayBuffer();

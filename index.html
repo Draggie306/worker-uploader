@@ -130,6 +130,8 @@
         if (files.length > 0 && files.length <= 20) {
             progressContainer.style.display = 'block'; // show the element as it was previously hidden
             const formData = new FormData();
+            let uploaded = 0;
+            const totalFiles = files.length;
 
             for (let i = 0; i < totalFiles; i++) {
                 const file = files[i];
