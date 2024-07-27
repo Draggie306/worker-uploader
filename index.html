@@ -92,6 +92,8 @@
         <div id="message"></div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
+
     <!-- todo: script src instead? -->
 
     <script>
@@ -150,9 +152,25 @@
                     const overallPercentage = Math.round((uploaded / totalFiles) * 100);
                     if (uploaded < totalFiles) {
                         uploadFile(files[uploaded], uploaded);
-                    } else {
-                        messageDiv.textContent = 'Photos have been uploaded successfully!';
+                    } else if (uploaded === totalFiles) {
+                        var text_content = `All ${totalFiles} items uploaded successfully!`;
+                        messageDiv.textContent = text_content;
                         messageDiv.style.color = 'green';
+
+                        // Display confetti
+                        for (let i = 0; i < totalFiles; i++) {
+                            confetti({
+                                particleCount: (Math.random() * 100) + 50,
+                                spread: (Math.random() * 100) + 50,
+                                origin: { y: 0.6 }
+                            });
+                        }
+
+                        // Scroll to the bottom of the page to show the message
+                        window.scrollTo(0, document.body.scrollHeight);
+                    } else {
+                        messageDiv.textContent = 'Error: An unknown error occurred.';
+                        messageDiv.style.color = 'red';
                     }
                 } else {
                     try {
