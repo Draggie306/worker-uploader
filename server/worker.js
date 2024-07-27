@@ -14,7 +14,16 @@ addEventListener('fetch', event => {
 })
 
 async function handleRequest(request, env) {
-  return await handleUpload(request, env);
+  if (request.method === "POST") {
+    const url = new URL(request.url);
+    if (url.pathname === "/upload") {
+      return await handleUpload(request, env);
+    }
+  }
+  if (request.method === "OPTIONS") {
+    return handleOptions(request);
+  }
+  return new Response("Not found", { status: 404 });
 }
 
 async function handleUpload(request, env) {
