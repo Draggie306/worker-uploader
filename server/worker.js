@@ -13,41 +13,20 @@ addEventListener('fetch', event => {
     event.respondWith(handleRequest(event.request))
 })
 
-async function handleRequest(request) {
-    if (request.method === "POST") {
-      const url = new URL(request.url);
-      if (url.pathname === "/upload") {
-        // upload it to the bucket
-        return await handleUpload(request, env);
-      }
-    }
-    return new Response("Not found! :(", { status: 404 });
-  }
+async function handleRequest(request, env) {
+  return await handleUpload(request, env);
+}
 
-  async function handleUpload(request) {
-    const formData = await request.formData();
-    const file = formData.get("file");
-    const reader = file.stream().getReader();
-    const bucket = new Bucket(env.BUCKET_NAME);
-    const writer = bucket.file(file.name).createWriteStream();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      writer.write(value);
-    }
-    writer.end();
-    return new Response("Uploaded!", { status: 200 });
-  }
+async function handleUpload(request, env) {
+  const formData = await request.formData();
+  const images = formData.getAll("images");
+  
+  const blob = await image.arrayBuffer();
+  const key = `images/${image.name}`;
+  await env.photos.put(key, blob);
 
-
-/*
-todo: 
-- add a route to handle the upload
-- connect r2 bucket with env variables
-- everything else
-*/
+  return new Response("Done", { status: 200 });
+}
 
 export {
 worker_default as default
