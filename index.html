@@ -74,6 +74,11 @@
         #message {
             margin-top: 20px;
         }
+
+        #faq {
+            margin-top: 20px;
+            text-align: left;
+        }
     </style>
 </head>
 
@@ -90,11 +95,21 @@
                 <input type="submit" value="Submit">
             </form>
 
+            <!-- Hidden forms. Depending on the code, the more relevant input window will show. -->
+            <div id="wrapper"> <!-- https://stackoverflow.com/a/49680831 new hack learnt -->
+
             <!-- Just for photos -->
             <form id="upload-photos-form" enctype="multipart/form-data" style="display: none;">
                 <p>You can select up to 100 photos.</p> 
                 <input type="file" id="images" name="images" multiple accept="image/*">
             </form>
+
+            <!-- ... and now for anything else! -->
+            <form id="upload-anything-form" enctype="multipart/form-data" style="display: none;">
+                <p>Max file size: 512MiB</p>
+                <input type="file" id="images" name="anything" multiple accept="*/*">
+            </form>
+
             </div>
 
             <div id="progress-container">
@@ -108,13 +123,24 @@
             <div id="message">
                 <p id="msgContent"></p>
             </div>
+
+            <div id="faq">
+                <h2>FAQ</h2>
+                <p>Q: How many items can I upload?</p>
+                <p><strong>A: Up to 100 at a time. Each file must be less than 512MiB.</strong></p>
+                <p>Q: Is this secure?</p>
+                <p><strong>A: Yes, files are encrypted with military-grade encryption in transit and at rest.</p>
+                </strong>
+                <p>Q: Is this incredibly overengineered?</p>
+                <p><strong>A: Yes.</strong>
+            </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
 
     <script>
-        const photoCodes = ["baguette",]
-        const allCodes = ["jake", "files"]
+        const photoCodes = ['ndhs', "baguette"]
+        const allCodes = [ "jake", "files"]
         const codeForm = document.getElementById('code-form');
         const uploadPhotosForm = document.getElementById('upload-photos-form');
         const progressContainer = document.getElementById('progress-container');
@@ -185,6 +211,11 @@
                         messageDiv.textContent = `Error: ${error.message}`;
                         messageDiv.style.color = 'red';
                     }
+
+                    xhr.onerror = function () {
+                        messageDiv.textContent = 'Error: Network error. Your connection was reset. Please try again.';  
+                        messageDiv.style.color = 'red';
+                    };
 
                     xhr.upload.onprogress = function (event) {
                         if (event.lengthComputable) {
