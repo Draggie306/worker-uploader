@@ -1,20 +1,18 @@
 <!DOCTYPE html>
-<html lang="en-GB">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="description" content="A simple tool to upload photos, in full quality.">"
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload Your Photos</title>
     <style>
-        html {
-            box-sizing: border-box;
-        }
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             padding: 20px;
             background-color: #f8f8f8;
         }
+
         .container {
             max-width: 600px;
             margin: auto;
@@ -23,14 +21,18 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 10px;
         }
-        input[type="text"], input[type="file"] {
+
+        input[type="text"],
+        input[type="file"] {
             width: calc(100% - 40px);
             margin: 10px;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
-        input[type="submit"], button {
+
+        input[type="submit"],
+        button {
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
@@ -38,19 +40,23 @@
             color: white;
             cursor: pointer;
         }
+
         #upload-form {
             display: none;
         }
+
         #progress-container {
             display: none;
             margin: 20px 0;
         }
+
         #progress-bar {
             width: 100%;
             background: #ccc;
             border-radius: 5px;
             overflow: hidden;
         }
+
         #progress-bar-fill {
             height: 20px;
             background: #4CAF50;
@@ -60,153 +66,184 @@
             line-height: 20px;
             border-radius: 5px;
         }
+
         #file-status {
             margin-top: 10px;
         }
+
+        #message {
+            margin-top: 20px;
+        }
     </style>
 </head>
+
+
 <body>
     <div class="container">
-        <h1>Hi! If you see this then that means I would like you to send some photos.</h1>
+        <h1>Direct Upload Utility!</h1>
         <h2>Instagram and other apps kill photo quality; uploading here will preserve them!</h1>
             <h3>(If you're on iOS, you can select "Options" whilst in the gallery view to ensure that everything is
                 selected for the best quality!)</h3>
-
-        <!-- Simple authenication -->
             <form id="code-form">
                 <label for="code">Enter the code you've received below:</label>
                 <input type="text" id="code" placeholder="Enter the code">
                 <input type="submit" value="Submit">
-        </form>
+            </form>
 
-        <form id="upload-form" enctype="multipart/form-data">
-            <input type="file" id="images" name="images" multiple accept="image/*">
-            <input type="submit" value="Upload">
-        </form>
-        <div id="progress-container">
-            <div id="progress-bar">
-                <div id="progress-bar-fill">0%</div>
+            <!-- Just for photos -->
+            <form id="upload-photos-form" enctype="multipart/form-data" style="display: none;">
+                <p>You can select up to 100 photos.</p> 
+                <input type="file" id="images" name="images" multiple accept="image/*">
+            </form>
             </div>
-            <div id="file-status"></div>
-        </div>
-        <div id="message"></div>
+
+            <div id="progress-container">
+                <div id="progress-bar">
+                    <div id="progress-bar-fill">0%</< /div>
+                    </div>
+                    <div id="file-status"></div>
+                </div>
+            </div>
+
+            <div id="message">
+                <p id="msgContent"></p>
+            </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
 
-    <!-- todo: script src instead? -->
-
     <script>
-    const validCode = "ndhs";
-    const codeForm = document.getElementById('code-form');
-    const uploadForm = document.getElementById('upload-form');
-    const progressContainer = document.getElementById('progress-container');
-    const progressBarFill = document.getElementById('progress-bar-fill');
-    const fileStatus = document.getElementById('file-status');
-    const messageDiv = document.getElementById('message');
+        const photoCodes = ["baguette",]
+        const allCodes = ["jake", "files"]
+        const codeForm = document.getElementById('code-form');
+        const uploadPhotosForm = document.getElementById('upload-photos-form');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const fileStatus = document.getElementById('file-status');
+        const messageDiv = document.getElementById('message');
+        const msgContent = document.getElementById('msgContent');
 
-    codeForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        const code = document.getElementById('code').value;
-        if (code === validCode) {
-            uploadForm.style.display = 'block';
-            codeForm.style.display = 'none';
-        } else {
-            messageDiv.textContent = 'Invalid code. Please try again.';
-            messageDiv.style.color = 'red';
-        }
-    });
+        let xhr;
 
-    function generateUUID() {
+        codeForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const code = document.getElementById('code').value;
+            if (code && photoCodes.includes(code.toLowerCase())) {
+                uploadPhotosForm.style.display = 'block';
+                codeForm.style.display = 'none';
+                messageDiv.textContent = '';
+            } else if (code && allCodes.includes(code.toLowerCase())) {
+                document.getElementById('upload-anything-form').style.display = 'block';
+                codeForm.style.display = 'none';
+                messageDiv.textContent = '';
+            } else {
+                console.log("invalid code");
+                msgContent.innerHTML = 'Invalid code. Please try again.';
+                messageDiv.style.color = 'red';
+            }
+        });
+
+        function generateUUID() {
             return 'xxxxxxxx'.replace(/[xy]/g, function (c) {
                 const r = Math.random() * 16 | 0;
                 return r.toString(16);
             });
         }
 
-    uploadForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        const files = document.getElementById('images').files;
-        if (files.length > 0 && files.length <= 20) {
-            progressContainer.style.display = 'block'; // show the element as it was previously hidden
-            const formData = new FormData();
-            let uploaded = 0;
-            const totalFiles = files.length;
+        document.getElementById("wrapper").addEventListener('change', async function (event) {
+            const files = event.target.files;
+            if (files.length > 0 && files.length <= 100) {
+                progressContainer.style.display = 'block';
+                const folderPrefix = generateUUID();
+                let uploaded = 0;
+                const totalFiles = files.length;
 
-            for (let i = 0; i < totalFiles; i++) {
-                const file = files[i];
-                const fileSize = file.size;
-                let uploadedBytes = 0;
+                for (let i = 0; i < totalFiles; i++) {
+                    const file = files[i];
+                    const fileSize = file.size;
+                    let uploadedBytes = 0;
 
-                const fileStatusText = document.createElement('div');
-                fileStatusText.textContent = `Uploading ${file.name}`;
-                fileStatus.appendChild(fileStatusText);
+                    const fileStatusText = document.createElement('div');
+                    fileStatusText.textContent = `Uploading ${file.name} (${i + 1} of ${totalFiles})`;
+                    fileStatus.appendChild(fileStatusText);
 
-                const fileData = new FormData();
-                fileData.append('images', file, `${file.name}`);
+                    const fileData = new FormData();
+                    fileData.append('images', file, `${folderPrefix}/${file.name}`);
 
-                try {
-                    xhr = new XMLHttpRequest();
-                } catch (error) {
-                    console.log("err encountered");
-                    messageDiv.textContent = `Error: ${error.message}`;
-                    messageDiv.style.color = 'red';
-                }
-
-                xhr.open('POST', 'https://photo-uploader-backend.draggie.workers.dev/upload', true);
-
-                xhr.upload.onprogress = function (event) {
-                    if (event.lengthComputable) {
-                        fileStatusText.textContent = `Uploading ${file.name}`;
-                    }
-                };
-
-                xhr.onload = function () {
-                    if (xhr.status === 200) {
-                        uploaded++;
-                        const overallPercentage = Math.round((uploaded / totalFiles) * 100);
-                        progressBarFill.style.width = `${overallPercentage}%`;
-                        progressBarFill.textContent = `${overallPercentage}%`;
-
-                        if (uploaded === totalFiles) {
-                            messageDiv.textContent = 'Photos uploaded successfully!';
-                            messageDiv.style.color = 'green';
-
-                            // Display confetti when all files are uploaded depending on the number of files
-                            for (let i = 0; i < totalFiles; i++) {
-                                confetti({
-                                    particleCount: (Math.random() * 100) + 50,
-                                    spread: (Math.random() * 100) + 50,
-                                    origin: { y: 0.6 }
-                                });
-                            }
-
-                            // Scroll to the bottom of the page to show the message
-                            window.scrollTo(0, document.body.scrollHeight);
-                        }
-                    } else {
-                        const result = JSON.parse(xhr.responseText);
-                        messageDiv.textContent = `Error: ${result.message}`;
+                    try {
+                        xhr = new XMLHttpRequest();
+                    } catch (error) {
+                        console.log("err encountered");
+                        messageDiv.textContent = `Error: ${error.message}`;
                         messageDiv.style.color = 'red';
-                        return;
-                    }                    };
+                    }
 
-                try {
-                    xhr.send(fileData);
-                } catch (error) {
-                    console.log("err encountered");
-                    messageDiv.textContent = `Error: ${error.message}`;
-                    messageDiv.style.color = 'red';
+                    try {
+                        xhr.open('POST', 'https://photo-uploader-backend.draggie.workers.dev/upload', true);
+                    } catch (error) {
+                        console.log("err encountered");
+                        messageDiv.textContent = `Error: ${error.message}`;
+                        messageDiv.style.color = 'red';
+                    }
+
+                    xhr.upload.onprogress = function (event) {
+                        if (event.lengthComputable) {
+                            uploadedBytes = event.loaded;
+                            const percentComplete = Math.round((event.loaded / event.total) * 100);
+                            fileStatusText.textContent = `Uploading ${file.name} (${i + 1} of ${totalFiles}): ${percentComplete}% (${uploadedBytes} of ${fileSize} bytes)`;
+                        }
+                    };
+
+                    xhr.onload = function () {
+                        if (xhr.status === 200) {
+                            uploaded++;
+                            const overallPercentage = Math.round((uploaded / totalFiles) * 100);
+                            progressBarFill.style.width = `${overallPercentage}%`;
+                            progressBarFill.textContent = `${overallPercentage}% (uploaded ${uploaded} of ${totalFiles})`;
+
+                            if (uploaded === totalFiles) {
+                                var plural = totalFiles > 1 ? 's' : '';
+                                var text_content = `All ${totalFiles} item${plural} uploaded successfully! Please take a screenshot or copy this confirmation code: ${folderPrefix} and send it to me :)\nHave a great day!`;
+                                messageDiv.textContent = text_content;
+                                messageDiv.style.color = 'green';
+
+                                // Display confetti
+                                for (let i = 0; i < totalFiles; i++) {
+                                    confetti({
+                                        particleCount: (Math.random() * 100) + 50,
+                                        spread: (Math.random() * 100) + 50,
+                                        origin: { y: 0.6 }
+                                    });
+                                }
+
+                                // Scroll to the bottom of the page to show the message
+                                window.scrollTo(0, document.body.scrollHeight);
+                            }
+                        } else {
+                            const result = JSON.parse(xhr.responseText);
+                            messageDiv.textContent = `Error: ${result.message}`;
+                            messageDiv.style.color = 'red';
+                            return;
+                        }
+                    };
+
+                    try {
+                        xhr.send(fileData);
+                    } catch (error) {
+                        console.log("err encountered");
+                        messageDiv.textContent = `Error: ${error.message}`;
+                        messageDiv.style.color = 'red';
+                    }
                 }
-
-
+            } else {
+                messageDiv.textContent = 'Please select up to 100 photos only!';
+                messageDiv.style.color = 'red';
             }
-        } else {
-            messageDiv.textContent = 'Please select between 1 and 20 images.';
-            messageDiv.style.color = 'red';
-        }
-    });
-</script>
+        });
+    </script>
+</body>
+
 
 </body>
+
 </html>
