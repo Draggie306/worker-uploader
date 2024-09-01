@@ -98,49 +98,47 @@
             <!-- Hidden forms. Depending on the code, the more relevant input window will show. -->
             <div id="wrapper"> <!-- https://stackoverflow.com/a/49680831 new hack learnt -->
 
-            <!-- Just for photos -->
-            <form id="upload-photos-form" enctype="multipart/form-data" style="display: none;">
-                <p>You can select up to 100 photos.</p> 
-                <input type="file" id="images" name="images" multiple accept="image/*">
-            </form>
+                <!-- Just for photos -->
+                <form id="upload-photos-form" enctype="multipart/form-data" style="display: none;">
+                    <p>You can select up to 100 photos.</p>
+                    <input type="file" id="images" name="images" multiple accept="image/*">
+                </form>
 
-            <!-- ... and now for anything else! -->
-            <form id="upload-anything-form" enctype="multipart/form-data" style="display: none;">
-                <p>Max file size: 512MiB</p>
-                <input type="file" id="images" name="anything" multiple accept="*/*">
-            </form>
-
+                <!-- ... and now for anything else! -->
+                <form id="upload-anything-form" enctype="multipart/form-data" style="display: none;">
+                    <p>Max file size: 512MiB</p>
+                    <input type="file" id="images" name="anything" multiple accept="*/*">
+                </form>
             </div>
 
             <div id="progress-container">
                 <div id="progress-bar">
-                    <div id="progress-bar-fill">0%</< /div>
-                    </div>
-                    <div id="file-status"></div>
+                    <div id="progress-bar-fill">0%</div>
                 </div>
+                <div id="file-status"></div>
             </div>
 
-            <div id="message">
-                <p id="msgContent"></p>
-            </div>
+    <div id="message">
+        <p id="msgContent"></p>
+    </div>
 
-            <div id="faq">
-                <h2>FAQ</h2>
-                <p>Q: How many items can I upload?</p>
-                <p><strong>A: Up to 100 at a time. Each file must be less than 512MiB.</strong></p>
-                <p>Q: Is this secure?</p>
-                <p><strong>A: Yes, files are encrypted with military-grade encryption in transit and at rest.</p>
-                </strong>
-                <p>Q: Is this incredibly overengineered?</p>
-                <p><strong>A: Yes.</strong>
-            </div>
+    <div id="faq">
+        <h2>FAQ</h2>
+        <p>Q: How many items can I upload?</p>
+        <p><strong>A: Up to 100 at a time. Each file must be less than 100MiB.</strong> If this is an issue, let me
+            know.</p>
+        <p>Q: Is this secure?</p>
+        <p><strong>A: Yes, files are encrypted with military-grade encryption in transit and at rest.</p>
+        </strong>
+        <p>Q: Is this incredibly overengineered?</p>
+        <p><strong>A: Yes.</strong>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
 
     <script>
-        const photoCodes = ['ndhs', "baguette"]
-        const allCodes = [ "jake", "files"]
+        const photoCodes = ['ndhs', "baguette", "renu"]
+        const allCodes = ["renushree", "jake", "files"]
         const codeForm = document.getElementById('code-form');
         const uploadPhotosForm = document.getElementById('upload-photos-form');
         const progressContainer = document.getElementById('progress-container');
@@ -182,6 +180,18 @@
                 progressContainer.style.display = 'block';
                 const folderPrefix = generateUUID();
                 let uploaded = 0;
+
+                // Check every 1 second if the upload is complete
+                const interval = setInterval(() => {
+                    if (uploaded === totalFiles) {
+                        console.log(`Folder prefix: ${folderPrefix}, uploaded all files`);
+                        clearInterval(interval);
+                    } else {
+                        console.log(`Folder prefix: ${folderPrefix}, uploaded ${uploaded} of ${totalFiles} files`);
+                    }
+                }, 1000);
+
+                console.log(`Beginning upload for ${files.length} files`);
                 const totalFiles = files.length;
 
                 for (let i = 0; i < totalFiles; i++) {
@@ -190,6 +200,7 @@
                     let uploadedBytes = 0;
 
                     const fileStatusText = document.createElement('div');
+                    console.log(`Uploading ${file.name} (${i + 1} of ${totalFiles})`);
                     fileStatusText.textContent = `Uploading ${file.name} (${i + 1} of ${totalFiles})`;
                     fileStatus.appendChild(fileStatusText);
 
@@ -199,7 +210,7 @@
                     try {
                         xhr = new XMLHttpRequest();
                     } catch (error) {
-                        console.log("err encountered");
+                        console.log(`Err encountered while creating xhr: ${error.message}`);
                         messageDiv.textContent = `Error: ${error.message}`;
                         messageDiv.style.color = 'red';
                     }
@@ -213,7 +224,8 @@
                     }
 
                     xhr.onerror = function () {
-                        messageDiv.textContent = 'Error: Network error. Your connection was reset. Please try again.';  
+                        console.log(`POST error: ${xhr.statusText}`);
+                        messageDiv.textContent = 'Error: Network error. Your connection was reset. Please try again.';
                         messageDiv.style.color = 'red';
                     };
 
@@ -227,12 +239,15 @@
 
                     xhr.onload = function () {
                         if (xhr.status === 200) {
+                            console.log(`Uploaded ${file.name} successfully, for ${uploaded + 1} of ${totalFiles} files`);
                             uploaded++;
                             const overallPercentage = Math.round((uploaded / totalFiles) * 100);
                             progressBarFill.style.width = `${overallPercentage}%`;
                             progressBarFill.textContent = `${overallPercentage}% (uploaded ${uploaded} of ${totalFiles})`;
+                            fileStatusText.textContent = `Uploaded ${file.name} (${i + 1} of ${totalFiles}) successfully!`;
 
                             if (uploaded === totalFiles) {
+                                console.warn(`All ${totalFiles} files uploaded successfully!`);
                                 var plural = totalFiles > 1 ? 's' : '';
                                 var text_content = `All ${totalFiles} item${plural} uploaded successfully! Please take a screenshot or copy this confirmation code: ${folderPrefix} and send it to me :)\nHave a great day!`;
                                 messageDiv.textContent = text_content;
@@ -250,9 +265,25 @@
                                 // Scroll to the bottom of the page to show the message
                                 window.scrollTo(0, document.body.scrollHeight);
                             }
-                        } else {
-                            const result = JSON.parse(xhr.responseText);
-                            messageDiv.textContent = `Error: ${result.message}`;
+                        } else if (xhr.status === 204) {
+                            // This is a preflight request, ignore
+                            return;
+                        } 
+                        else {
+                            console.error(`Error: ${xhr}`);
+                            console.log('Response Text:', xhr.responseText); // Log the response text
+                            if (!xhr.responseText) {
+                                console.error('Empty response text');
+                                messageDiv.textContent = 'Error: Empty response from server.';
+                                uploaded++; // hack fix LMAOO idk why there is no response text
+                            } 
+                            try {
+                                const result = JSON.parse(xhr.responseText);
+                                messageDiv.textContent = `Error: ${result.message}`;
+                            } catch (e) {
+                                console.error('Failed to parse JSON response:', e);
+                                messageDiv.textContent = 'Error: Failed to parse server response.';
+                            }
                             messageDiv.style.color = 'red';
                             return;
                         }
