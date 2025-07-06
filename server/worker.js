@@ -57,6 +57,15 @@ async function handleUpload(request, env) {
       return key;
     });
     const keys = await Promise.all(promises);
+    
+    try {
+      console.log("sending discord webhook")
+      await send_webook_request(`${keys[0]}`, images.length)
+    } catch (e) {
+      console.error(e);
+      null;
+    }
+
     return new Response(JSON.stringify({ message: "Upload successful", keys }), {
       status: 200,
       headers: {
@@ -75,6 +84,44 @@ async function handleUpload(request, env) {
     });
   }
 }
+
+/**
+ * Sends a link to the resource uploaded to a Discord webhook.
+ * @param {string} file_key
+ * @param {number} num_msgs
+ */
+async function send_webook_request(file_key, num_msgs) {
+  const discord_webhook_url = env.DISCORD_WEBHOOK_URL;
+
+  // Assets may have spaces so use markdown formatting.
+  var full_url = new URL(`${env.BASE_DEV_R2_URL}/${file_key}`).href;
+
+  // Ternary operator for grammar
+  var webhook_payload_content = num_msgs == 1 ? `1 new asset has been uploaded @here to the storage bucket, R2 preview url: [${file_key}](${full_url})` : `${num_msgs} assets have been uploaded @here to the storage bucket, R2 preview url: [${file_key}](${full_url})`
+
+  // console.log(webhook_payload_content);
+
+  let result = await fetch(discord_webhook_url,
+    {
+      // Set Discord's expected values...
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+
+      // ...and the actual content.
+      body: JSON.stringify({
+        username: 'New Uploaded Media',
+        content: webhook_payload_content,
+      })
+    }
+  )
+
+  // View this in the Worker -> Real-time logs.
+  console.log(`discord response: ${result.status}, ${result.text()}`);
+}
+
+
 export {
   worker_default as default
 };
